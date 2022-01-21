@@ -8,6 +8,13 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "16.x"
+  - task: Npm@1
+    inputs:
+      command: "install"
+      workingDir: "frontend"
   - task: SnykSecurityScan@1
     inputs:
       serviceConnectionEndpoint: "Shellvis Snyk Integration"
@@ -17,4 +24,5 @@ steps:
       failOnIssues: true
       projectName: "DCD DevOps"
       organization: "559239bb-3363-45ab-925a-a639ba9e0e51"
-      testDirectory: '$(Build.SourcesDirectory)/frontend'
+      targetFile: 'package.json'
+      testDirectory: 'frontend'
