@@ -43,7 +43,7 @@ const SubstructureView = () => {
             if (project !== undefined) {
                 const caseResult = project.cases.find((o) => o.id === params.caseId)
                 setCase(caseResult)
-                let newSubstructure = project!.substructures.find((s) => s.id === params.substructureId)
+                let newSubstructure = project.substructures.find((s) => s.id === params.substructureId)
                 if (newSubstructure !== undefined) {
                     setSubstructure(newSubstructure)
                 } else {
