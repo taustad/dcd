@@ -43,7 +43,7 @@ function WellProjectView() {
             if (project !== undefined) {
                 const caseResult = project.cases.find((o) => o.id === params.caseId)
                 setCase(caseResult)
-                let newWellProject = project!.wellProjects.find((s) => s.id === params.wellProjectId)
+                let newWellProject = project.wellProjects.find((s) => s.id === params.wellProjectId)
                 if (newWellProject !== undefined) {
                     setWellProject(newWellProject)
                 } else {
