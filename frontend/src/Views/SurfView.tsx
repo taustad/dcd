@@ -42,7 +42,7 @@ const SurfView = () => {
             if (project !== undefined) {
                 const caseResult = project.cases.find((o) => o.id === params.caseId)
                 setCase(caseResult)
-                let newSurf = project!.surfs.find((s) => s.id === params.surfId)
+                let newSurf = project.surfs.find((s) => s.id === params.surfId)
                 if (newSurf !== undefined) {
                     setSurf(newSurf)
                 } else {
