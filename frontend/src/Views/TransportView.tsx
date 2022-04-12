@@ -43,7 +43,7 @@ const TransportView = () => {
             if (project !== undefined) {
                 const caseResult = project.cases.find((o) => o.id === params.caseId)
                 setCase(caseResult)
-                let newTransport = project!.transports.find((s) => s.id === params.transportId)
+                let newTransport = project.transports.find((s) => s.id === params.transportId)
                 if (newTransport !== undefined) {
                     setTransport(newTransport)
                 } else {

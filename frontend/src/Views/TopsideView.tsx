@@ -43,7 +43,7 @@ const TopsideView = () => {
             if (project !== undefined) {
                 const caseResult = project.cases.find((o) => o.id === params.caseId)
                 setCase(caseResult)
-                let newTopside = project!.topsides.find((s) => s.id === params.topsideId)
+                let newTopside = project.topsides.find((s) => s.id === params.topsideId)
                 if (newTopside !== undefined) {
                     setTopside(newTopside)
                 } else {
