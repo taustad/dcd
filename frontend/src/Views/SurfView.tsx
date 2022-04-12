@@ -11,7 +11,7 @@ import { GetProjectService } from "../Services/ProjectService"
 import { GetSurfService } from "../Services/SurfService"
 import TimeSeriesEnum from "../models/assets/TimeSeriesEnum"
 import TimeSeries from "../Components/TimeSeries"
-import { emptyGuid } from "../Utils/constants"
+import { EMPTY_GUID } from "../Utils/constants"
 import {
     AssetHeader, AssetViewDiv, Dg4Field, SaveButton, Wrapper, WrapperColumn,
 } from "./Asset/StyledAssetComponents"
@@ -57,11 +57,11 @@ const SurfView = () => {
     const handleSave = async () => {
         const surfDto = new Surf(surf!)
         surfDto.name = surfName
-        if (surf?.id === emptyGuid) {
+        if (surf?.id === EMPTY_GUID) {
             surfDto.projectId = params.projectId
             const newProject = await GetSurfService().createSurf(params.caseId!, surfDto!)
             const newSurf = newProject.surfs.at(-1)
-            const newUrl = location.pathname.replace(emptyGuid, newSurf!.id!)
+            const newUrl = location.pathname.replace(EMPTY_GUID, newSurf!.id!)
             navigate(`${newUrl}`, { replace: true })
             setProject(newProject)
         } else {
