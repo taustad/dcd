@@ -330,7 +330,8 @@ public static class SampleAssetGenerator
             Description = "Project from example spread sheet",
             CreateDate = DateTimeOffset.UtcNow.Date,
             ProjectCategory = ProjectCategory.OffshoreWind,
-            ProjectPhase = ProjectPhase.BusinessPlanning
+            ProjectPhase = ProjectPhase.BusinessPlanning,
+            Id = new Guid("a58880a6-7ac7-471e-a4e6-139fa403f230")
         };
     }
     public static CaseBuilder case2Case()

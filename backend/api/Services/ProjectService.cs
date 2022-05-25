@@ -147,33 +147,106 @@ namespace api.Services
 
         public Project GetProject(Guid projectId)
         {
-            if (_context.Projects != null)
+            try
             {
-                var project = _context.Projects
-                    .Include(c => c.Cases)
-                    .FirstOrDefault(p => p.Id.Equals(projectId));
-
-                if (project == null)
+                if (_context.Projects != null)
                 {
-                    throw new NotFoundInDBException(string.Format("Project {0} not found", projectId));
-                }
-                Activity.Current?.AddBaggage(nameof(projectId), JsonConvert.SerializeObject(projectId, Formatting.None,
-                    new JsonSerializerSettings()
+                    var project = _context.Projects
+                        .Include(c => c.Cases)
+                        .FirstOrDefault(p => p.Id.Equals(projectId));
+
+                    if (project == null)
                     {
-                        ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-                    }));
-                AddAssetsToProject(project);
-                _logger.LogInformation("Add assets to project", project.ToString());
+                        throw new NotFoundInDBException(string.Format("Project {0} not found", projectId));
+                    }
+                    Activity.Current?.AddBaggage(nameof(projectId), JsonConvert.SerializeObject(projectId, Formatting.None,
+                        new JsonSerializerSettings()
+                        {
+                            ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+                        }));
+                    AddAssetsToProject(project);
+                    _logger.LogInformation("Add assets to project", project.ToString());
+                    return project;
+                }
+            }
+            catch (NotFoundInDBException)
+            {
+                // _logger.LogError(new NotFoundInDBException($"The database contains no projects"), "no projects");
+                // throw new NotFoundInDBException($"The database contains no projects");
+                DateTimeOffset createDate = DateTimeOffset.UtcNow;
+                var newProject = new Project
+                {
+                    Id = projectId,
+                    CreateDate = createDate
+                };
+                var project = CreateFusionProject(newProject);
                 return project;
             }
-            _logger.LogError(new NotFoundInDBException($"The database contains no projects"), "no projects");
-            throw new NotFoundInDBException($"The database contains no projects");
+            return null;
         }
+
+        public Project CreateFusionProject(Project project)
+        {
+            project.CreateDate = DateTimeOffset.UtcNow.Date;
+            project.Cases = new List<Case>();
+            project.DrainageStrategies = new List<DrainageStrategy>();
+            project.Substructures = new List<Substructure>();
+            project.Surfs = new List<Surf>();
+            project.Topsides = new List<Topside>();
+            project.Transports = new List<Transport>();
+            project.WellProjects = new List<WellProject>();
+            project.Explorations = new List<Exploration>();
+
+            Activity.Current?.AddBaggage(nameof(project), JsonConvert.SerializeObject(project, Formatting.None,
+                        new JsonSerializerSettings()
+                        {
+                            ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+                        }));
+
+            if (_context.Projects != null)
+            {
+                var existingProjectLibIds = _context.Projects.Select(p => p.CommonLibraryId).ToList();
+                if (existingProjectLibIds.Contains(project.CommonLibraryId))
+                {
+                    // Project already exists, navigate to project
+                    _logger.LogInformation(nameof(project));
+                    return GetProject(_context.Projects.Where(p => p.CommonLibraryId == project.CommonLibraryId).First().Id);
+                }
+            }
+
+            if (_context.Projects == null)
+            {
+                _logger.LogInformation("Empty projects: ", nameof(project));
+                var projects = new List<Project>();
+                projects.Add(project);
+                _context.AddRange(projects);
+            }
+            else
+            {
+                _context.Projects.Add(project);
+            }
+            _context.SaveChanges();
+            return GetProject(project.Id);
+        }
+
+        // public Project CreateProjectFromFusion(Guid fusionProjectId)
+        // {
+        //     DateTimeOffset createDate = DateTimeOffset.UtcNow;
+
+        //     Project newProject = new Project
+        //     {
+        //         Id = fusionProjectId,
+        //         CreateDate = createDate
+        //     };
+
+        //     _context.Projects.Add(newProject);
+
+        //     _context.SaveChanges();
+        //     return newProject;
+        // }
 
         public ProjectDto GetProjectDto(Guid projectId)
         {
-
-
             var project = GetProject(projectId);
             var projectDto = ProjectDtoAdapter.Convert(project);
 
