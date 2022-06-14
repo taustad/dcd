@@ -27,13 +27,13 @@ const AssetCurrency = ({
             setHasChanges(true)
         }
         switch (event.currentTarget.selectedOptions[0].value) {
-        case "2":
-            setCurrency(2)
-            break
-        default:
-            setCurrency(1)
-            break
-        }
+            case "2":
+                setCurrency(2)
+                break
+            default:
+                setCurrency(1)
+                break
+            }
     }
 
     return (

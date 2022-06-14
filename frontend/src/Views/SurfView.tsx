@@ -1,9 +1,11 @@
+/* eslint-disable max-len */
 import { useEffect, useState } from "react"
 import {
-    Typography,
+    Input, Label, Typography,
 } from "@equinor/eds-core-react"
 
 import { useParams } from "react-router"
+import styled from "styled-components"
 import { Surf } from "../models/assets/surf/Surf"
 import { Case } from "../models/Case"
 import { Project } from "../models/Project"
@@ -11,13 +13,13 @@ import { GetProjectService } from "../Services/ProjectService"
 import { GetSurfService } from "../Services/SurfService"
 import TimeSeries from "../Components/TimeSeries"
 import {
-    AssetViewDiv, Wrapper, WrapperColumn,
+    AssetViewDiv, Dg4Field, Wrapper, WrapperColumn,
 } from "./Asset/StyledAssetComponents"
 import Save from "../Components/Save"
 import AssetName from "../Components/AssetName"
 import { unwrapCase, unwrapProjectId } from "../Utils/common"
 import AssetTypeEnum from "../models/assets/AssetTypeEnum"
-import { initializeFirstAndLastYear } from "./Asset/AssetHelper"
+import { GetArtificialLiftName, initializeFirstAndLastYear } from "./Asset/AssetHelper"
 import NumberInput from "../Components/NumberInput"
 import Maturity from "../Components/Maturity"
 import ProductionFlowline from "../Components/ProductionFlowline"
@@ -28,14 +30,35 @@ import NumberInputInherited from "../Components/NumberInputInherited"
 import ArtificialLiftInherited from "../Components/ArtificialLiftInherited"
 import ApprovedBy from "../Components/ApprovedBy"
 import DGDateInherited from "../Components/DGDateInherited"
+import SideMenu from "../Components/SideMenu/SideMenu"
+import { IAssetService } from "../Services/IAssetService"
 
+const ProjectWrapper = styled.div`
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+`
+
+const Body = styled.div`
+    display: flex;
+    flex-direction: row;
+    flex-row: 1;
+    width: 100%;
+    height: 100%;
+`
+
+const MainView = styled.div`
+    width: calc(100% - 15rem);
+    overflow: scroll;
+`
 const SurfView = () => {
     const [project, setProject] = useState<Project>()
     const [caseItem, setCase] = useState<Case>()
     const [surf, setSurf] = useState<Surf>()
     const [hasChanges, setHasChanges] = useState(false)
     const [surfName, setSurfName] = useState<string>("")
-    const params = useParams()
+    const { fusionProjectId, caseId, surfId } = useParams<Record<string, string | undefined>>()
     const [firstTSYear, setFirstTSYear] = useState<number>()
     const [lastTSYear, setLastTSYear] = useState<number>()
     const [riserCount, setRiserCount] = useState<number | undefined>()
@@ -55,15 +78,18 @@ const SurfView = () => {
     const [approvedBy, setApprovedBy] = useState<string>("")
     const [dG3Date, setDG3Date] = useState<Date>()
     const [dG4Date, setDG4Date] = useState<Date>()
+    const [surfService, setSurfService] = useState<IAssetService>()
 
     useEffect(() => {
         (async () => {
             try {
-                const projectId: string = unwrapProjectId(params.projectId)
-                const projectResult: Project = await GetProjectService().getProjectByID(projectId)
+                const projectId: string = unwrapProjectId(fusionProjectId)
+                const projectResult: Project = await (await GetProjectService()).getProjectByID(projectId)
                 setProject(projectResult)
+                const service = await GetSurfService()
+                setSurfService(service)
             } catch (error) {
-                console.error(`[CaseView] Error while fetching project ${params.projectId}`, error)
+                console.error(`[CaseView] Error while fetching project ${fusionProjectId}`, error)
             }
         })()
     }, [])
@@ -71,9 +97,9 @@ const SurfView = () => {
     useEffect(() => {
         (async () => {
             if (project !== undefined) {
-                const caseResult: Case = unwrapCase(project.cases.find((o) => o.id === params.caseId))
+                const caseResult: Case = unwrapCase(project.cases.find((o) => o.id === caseId))
                 setCase(caseResult)
-                let newSurf: Surf | undefined = project.surfs.find((s) => s.id === params.surfId)
+                let newSurf: Surf | undefined = project.surfs.find((s) => s.id === surfId)
                 if (newSurf !== undefined) {
                     if (newSurf.DG3Date === null
                         || newSurf.DG3Date?.toLocaleDateString("en-CA") === "1-01-01") {
@@ -145,7 +171,6 @@ const SurfView = () => {
             newSurf.approvedBy = approvedBy
             newSurf.DG3Date = dG3Date
             newSurf.DG4Date = dG4Date
-
             newSurf.costProfile = costProfile
             newSurf.cessationCostProfile = cessationCostProfile
 
@@ -166,170 +191,177 @@ const SurfView = () => {
         dG3Date, dG4Date])
 
     return (
-        <AssetViewDiv>
-            <Wrapper>
-                <Typography variant="h2">Surf</Typography>
-                <Save
-                    name={surfName}
-                    setHasChanges={setHasChanges}
-                    hasChanges={hasChanges}
-                    setAsset={setSurf}
-                    setProject={setProject}
-                    asset={surf!}
-                    assetService={GetSurfService()}
-                    assetType={AssetTypeEnum.surfs}
-                />
-                <Typography variant="h6">
-                    {surf?.LastChangedDate?.toLocaleString()
+        <ProjectWrapper>
+            <Body>
+                <SideMenu />
+                <MainView>
+                    <AssetViewDiv>
+                        <Wrapper>
+                            <Typography variant="h2">Surf</Typography>
+                            <Save
+                                name={surfName}
+                                setHasChanges={setHasChanges}
+                                hasChanges={hasChanges}
+                                setAsset={setSurf}
+                                setProject={setProject}
+                                asset={surf!}
+                                assetService={surfService!}
+                                assetType={AssetTypeEnum.surfs}
+                            />
+                            <Typography variant="h6">
+                                {surf?.LastChangedDate?.toLocaleString()
                         ? `Last changed: ${surf?.LastChangedDate?.toLocaleString()}` : ""}
-                </Typography>
-            </Wrapper>
-            <AssetName
-                setName={setSurfName}
-                name={surfName}
-                setHasChanges={setHasChanges}
-            />
-            <ApprovedBy
-                setApprovedBy={setApprovedBy}
-                approvedBy={approvedBy}
-                setHasChanges={setHasChanges}
-            />
-            <Wrapper>
-                <DGDateInherited
-                    setHasChanges={setHasChanges}
-                    setValue={setDG3Date}
-                    dGName="DG3"
-                    value={dG3Date}
-                    caseValue={caseItem?.DG3Date}
-                    disabled={surf?.source === 1}
-                />
-                <DGDateInherited
-                    setHasChanges={setHasChanges}
-                    setValue={setDG4Date}
-                    dGName="DG4"
-                    value={dG4Date}
-                    caseValue={caseItem?.DG4Date}
-                    disabled={surf?.source === 1}
-                />
-            </Wrapper>
-            <AssetCurrency
-                setCurrency={setCurrency}
-                setHasChanges={setHasChanges}
-                currentValue={currency}
-            />
-            <Typography>
-                {`Prosp version: ${surf?.ProspVersion ? surf?.ProspVersion.toLocaleDateString() : "N/A"}`}
-            </Typography>
-            <Typography>
-                {`Source: ${surf?.source === 0 || surf?.source === undefined ? "ConceptApp" : "Prosp"}`}
-            </Typography>
-            <Wrapper>
-                <WrapperColumn>
-                    <ArtificialLiftInherited
-                        currentValue={artificialLift}
-                        setArtificialLift={setArtificialLift}
-                        setHasChanges={setHasChanges}
-                        caseArtificialLift={caseItem?.artificialLift}
-                    />
-                    <NumberInput
-                        setHasChanges={setHasChanges}
-                        setValue={setCostYear}
-                        value={costYear ?? 0}
-                        integer
-                        label="Cost year"
-                    />
-                </WrapperColumn>
-            </Wrapper>
+                            </Typography>
+                        </Wrapper>
+                        <AssetName
+                            setName={setSurfName}
+                            name={surfName}
+                            setHasChanges={setHasChanges}
+                        />
+                        <ApprovedBy
+                            setApprovedBy={setApprovedBy}
+                            approvedBy={approvedBy}
+                            setHasChanges={setHasChanges}
+                        />
+                        <Wrapper>
+                            <DGDateInherited
+                                setHasChanges={setHasChanges}
+                                setValue={setDG3Date}
+                                dGName="DG3"
+                                value={dG3Date}
+                                caseValue={caseItem?.DG3Date}
+                                disabled={surf?.source === 1}
+                            />
+                            <DGDateInherited
+                                setHasChanges={setHasChanges}
+                                setValue={setDG4Date}
+                                dGName="DG4"
+                                value={dG4Date}
+                                caseValue={caseItem?.DG4Date}
+                                disabled={surf?.source === 1}
+                            />
+                        </Wrapper>
+                        <AssetCurrency
+                            setCurrency={setCurrency}
+                            setHasChanges={setHasChanges}
+                            currentValue={currency}
+                        />
+                        <Typography>
+                            {`Prosp version: ${surf?.ProspVersion ? surf?.ProspVersion.toLocaleDateString() : "N/A"}`}
+                        </Typography>
+                        <Typography>
+                            {`Source: ${surf?.source === 0 || surf?.source === undefined ? "ConceptApp" : "Prosp"}`}
+                        </Typography>
+                        <Wrapper>
+                            <WrapperColumn>
+                                <ArtificialLiftInherited
+                                    currentValue={artificialLift}
+                                    setArtificialLift={setArtificialLift}
+                                    setHasChanges={setHasChanges}
+                                    caseArtificialLift={caseItem?.artificialLift}
+                                />
+                                <NumberInput
+                                    setHasChanges={setHasChanges}
+                                    setValue={setCostYear}
+                                    value={costYear ?? 0}
+                                    integer
+                                    label="Cost year"
+                                />
+                            </WrapperColumn>
+                        </Wrapper>
 
-            <Wrapper>
-                <NumberInputInherited
-                    setHasChanges={setHasChanges}
-                    setValue={setProducerCount}
-                    value={producerCount ?? 0}
-                    integer
-                    label="Producer count"
-                    caseValue={caseItem?.producerCount}
-                />
-                <NumberInputInherited
-                    setHasChanges={setHasChanges}
-                    setValue={setGasInjectorCount}
-                    value={gasInjectorCount ?? 0}
-                    integer
-                    label="Gas injector count"
-                    caseValue={caseItem?.gasInjectorCount}
-                />
-                <NumberInputInherited
-                    setHasChanges={setHasChanges}
-                    setValue={setWaterInjectorCount}
-                    value={waterInjectorCount ?? 0}
-                    integer
-                    label="Water injector count"
-                    caseValue={caseItem?.waterInjectorCount}
-                />
-            </Wrapper>
-            <Wrapper>
-                <NumberInput
-                    setHasChanges={setHasChanges}
-                    setValue={setRiserCount}
-                    value={riserCount ?? 0}
-                    integer
-                    label="Riser count"
-                />
-                <NumberInput
-                    setHasChanges={setHasChanges}
-                    setValue={setTemplateCount}
-                    value={templateCount ?? 0}
-                    integer
-                    label="Template count"
-                />
-                <NumberInput
-                    setHasChanges={setHasChanges}
-                    setValue={setInfieldPipelineSystemLength}
-                    value={infieldPipelineSystemLength ?? 0}
-                    integer
-                    label="Length of production lines (km)"
-                />
-                <NumberInput
-                    setHasChanges={setHasChanges}
-                    setValue={setUmbilicalSystemLength}
-                    value={umbilicalSystemLength ?? 0}
-                    integer
-                    label="Length of umbilical system (km)"
-                />
-            </Wrapper>
-            <Maturity
-                setMaturity={setMaturity}
-                currentValue={maturity}
-                setHasChanges={setHasChanges}
-            />
-            <ProductionFlowline
-                setHasChanges={setHasChanges}
-                currentValue={productionFlowline}
-                setProductionFlowline={setProductionFlowline}
-            />
-            <TimeSeries
-                dG4Year={caseItem?.DG4Date?.getFullYear()}
-                setTimeSeries={setCostProfile}
-                setHasChanges={setHasChanges}
-                timeSeries={costProfile}
-                timeSeriesTitle={`Cost profile ${currency === 2 ? "(MUSD)" : "(MNOK)"}`}
-                firstYear={firstTSYear!}
-                lastYear={lastTSYear!}
-                setFirstYear={setFirstTSYear!}
-                setLastYear={setLastTSYear}
-            />
-            <TimeSeries
-                dG4Year={caseItem?.DG4Date?.getFullYear()}
-                setTimeSeries={setCessationCostProfile}
-                setHasChanges={setHasChanges}
-                timeSeries={cessationCostProfile}
-                timeSeriesTitle={`Cessation cost profile ${currency === 2 ? "(MUSD)" : "(MNOK)"}`}
-                firstYear={firstTSYear!}
-                lastYear={lastTSYear!}
-                setFirstYear={setFirstTSYear!}
-                setLastYear={setLastTSYear}
-            />
-        </AssetViewDiv>
+                        <Wrapper>
+                            <NumberInputInherited
+                                setHasChanges={setHasChanges}
+                                setValue={setProducerCount}
+                                value={producerCount ?? 0}
+                                integer
+                                label="Producer count"
+                                caseValue={caseItem?.producerCount}
+                            />
+                            <NumberInputInherited
+                                setHasChanges={setHasChanges}
+                                setValue={setGasInjectorCount}
+                                value={gasInjectorCount ?? 0}
+                                integer
+                                label="Gas injector count"
+                                caseValue={caseItem?.gasInjectorCount}
+                            />
+                            <NumberInputInherited
+                                setHasChanges={setHasChanges}
+                                setValue={setWaterInjectorCount}
+                                value={waterInjectorCount ?? 0}
+                                integer
+                                label="Water injector count"
+                                caseValue={caseItem?.waterInjectorCount}
+                            />
+                        </Wrapper>
+                        <Wrapper>
+                            <NumberInput
+                                setHasChanges={setHasChanges}
+                                setValue={setRiserCount}
+                                value={riserCount ?? 0}
+                                integer
+                                label="Riser count"
+                            />
+                            <NumberInput
+                                setHasChanges={setHasChanges}
+                                setValue={setTemplateCount}
+                                value={templateCount ?? 0}
+                                integer
+                                label="Template count"
+                            />
+                            <NumberInput
+                                setHasChanges={setHasChanges}
+                                setValue={setInfieldPipelineSystemLength}
+                                value={infieldPipelineSystemLength ?? 0}
+                                integer
+                                label="Length of production lines (km)"
+                            />
+                            <NumberInput
+                                setHasChanges={setHasChanges}
+                                setValue={setUmbilicalSystemLength}
+                                value={umbilicalSystemLength ?? 0}
+                                integer
+                                label="Length of umbilical system (km)"
+                            />
+                        </Wrapper>
+                        <Maturity
+                            setMaturity={setMaturity}
+                            currentValue={maturity}
+                            setHasChanges={setHasChanges}
+                        />
+                        <ProductionFlowline
+                            setHasChanges={setHasChanges}
+                            currentValue={productionFlowline}
+                            setProductionFlowline={setProductionFlowline}
+                        />
+                        <TimeSeries
+                            dG4Year={caseItem?.DG4Date?.getFullYear()}
+                            setTimeSeries={setCostProfile}
+                            setHasChanges={setHasChanges}
+                            timeSeries={costProfile}
+                            timeSeriesTitle={`Cost profile ${currency === 2 ? "(MUSD)" : "(MNOK)"}`}
+                            firstYear={firstTSYear!}
+                            lastYear={lastTSYear!}
+                            setFirstYear={setFirstTSYear!}
+                            setLastYear={setLastTSYear}
+                        />
+                        <TimeSeries
+                            dG4Year={caseItem?.DG4Date?.getFullYear()}
+                            setTimeSeries={setCessationCostProfile}
+                            setHasChanges={setHasChanges}
+                            timeSeries={cessationCostProfile}
+                            timeSeriesTitle={`Cessation cost profile ${currency === 2 ? "(MUSD)" : "(MNOK)"}`}
+                            firstYear={firstTSYear!}
+                            lastYear={lastTSYear!}
+                            setFirstYear={setFirstTSYear!}
+                            setLastYear={setLastTSYear}
+                        />
+                    </AssetViewDiv>
+                </MainView>
+            </Body>
+        </ProjectWrapper>
     )
 }
 

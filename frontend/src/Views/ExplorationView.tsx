@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import {
     useParams,
 } from "react-router"
+import styled from "styled-components"
 import { Exploration } from "../models/assets/exploration/Exploration"
 import { Case } from "../models/Case"
 import { Project } from "../models/Project"
@@ -24,14 +25,35 @@ import { ExplorationDrillingSchedule } from "../models/assets/exploration/Explor
 import { GAndGAdminCost } from "../models/assets/exploration/GAndAdminCost"
 import TimeSeries from "../Components/TimeSeries"
 import AssetCurrency from "../Components/AssetCurrency"
+import SideMenu from "../Components/SideMenu/SideMenu"
+import { IAssetService } from "../Services/IAssetService"
 
+const ProjectWrapper = styled.div`
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+`
+
+const Body = styled.div`
+    display: flex;
+    flex-direction: row;
+    flex-row: 1;
+    width: 100%;
+    height: 100%;
+`
+
+const MainView = styled.div`
+    width: calc(100% - 15rem);
+    overflow: scroll;
+`
 const ExplorationView = () => {
     const [project, setProject] = useState<Project>()
     const [caseItem, setCase] = useState<Case>()
     const [exploration, setExploration] = useState<Exploration>()
     const [hasChanges, setHasChanges] = useState(false)
     const [name, setName] = useState<string>("")
-    const params = useParams()
+    const { fusionProjectId, caseId, explorationId } = useParams<Record<string, string | undefined>>()
     const [firstTSYear, setFirstTSYear] = useState<number>()
     const [lastTSYear, setLastTSYear] = useState<number>()
     const [costProfile, setCostProfile] = useState<ExplorationCostProfile>()
@@ -40,13 +62,17 @@ const ExplorationView = () => {
     const [rigMobDemob, setRigMobDemob] = useState<number>()
     const [currency, setCurrency] = useState<Components.Schemas.Currency>(1)
 
+    const [explorationService, setExplorationService] = useState<IAssetService>()
+
     useEffect(() => {
         (async () => {
             try {
-                const projectResult: Project = await GetProjectService().getProjectByID(params.projectId!)
+                const projectResult: Project = await (await GetProjectService()).getProjectByID(fusionProjectId!)
                 setProject(projectResult)
+                const service = await GetExplorationService()
+                setExplorationService(service)
             } catch (error) {
-                console.error(`[CaseView] Error while fetching project ${params.projectId}`, error)
+                console.error(`[CaseView] Error while fetching project ${fusionProjectId}`, error)
             }
         })()
     }, [])
@@ -54,10 +80,10 @@ const ExplorationView = () => {
     useEffect(() => {
         (async () => {
             if (project !== undefined) {
-                const caseResult: Case = unwrapCase(project.cases.find((o) => o.id === params.caseId))
+                const caseResult: Case = unwrapCase(project.cases.find((o) => o.id === caseId))
                 setCase(caseResult)
                 // eslint-disable-next-line max-len
-                let newExploration: Exploration | undefined = project.explorations.find((s) => s.id === params.explorationId)
+                let newExploration: Exploration | undefined = project.explorations.find((s) => s.id === explorationId)
                 if (newExploration !== undefined) {
                     setExploration(newExploration)
                 } else {
@@ -105,74 +131,81 @@ const ExplorationView = () => {
     }, [rigMobDemob, costProfile, drillingSchedule, gAndGAdminCost, currency])
 
     return (
-        <AssetViewDiv>
-            <Wrapper>
-                <Typography variant="h2">Exploration</Typography>
-                <Save
-                    name={name}
-                    setHasChanges={setHasChanges}
-                    hasChanges={hasChanges}
-                    setAsset={setExploration}
-                    setProject={setProject}
-                    asset={exploration!}
-                    assetService={GetExplorationService()}
-                    assetType={AssetTypeEnum.explorations}
-                />
-            </Wrapper>
-            <AssetName
-                setName={setName}
-                name={name}
-                setHasChanges={setHasChanges}
-            />
-            <AssetCurrency
-                setCurrency={setCurrency}
-                setHasChanges={setHasChanges}
-                currentValue={currency}
-            />
-            <Wrapper>
-                <NumberInput
-                    setValue={setRigMobDemob}
-                    value={rigMobDemob ?? 0}
-                    setHasChanges={setHasChanges}
-                    integer={false}
-                    disabled={false}
-                    label="Rig mob demob"
-                />
-            </Wrapper>
-            <TimeSeries
-                dG4Year={caseItem?.DG4Date?.getFullYear()}
-                setTimeSeries={setCostProfile}
-                setHasChanges={setHasChanges}
-                timeSeries={costProfile}
-                timeSeriesTitle={`Cost profile ${currency === 2 ? "(MUSD)" : "(MNOK)"}`}
-                firstYear={firstTSYear!}
-                lastYear={lastTSYear!}
-                setFirstYear={setFirstTSYear!}
-                setLastYear={setLastTSYear}
-            />
-            <TimeSeries
-                dG4Year={caseItem?.DG4Date?.getFullYear()}
-                setTimeSeries={setDrillingSchedule}
-                setHasChanges={setHasChanges}
-                timeSeries={drillingSchedule}
-                timeSeriesTitle="Drilling schedule"
-                firstYear={firstTSYear!}
-                lastYear={lastTSYear!}
-                setFirstYear={setFirstTSYear!}
-                setLastYear={setLastTSYear}
-            />
-            <TimeSeries
-                dG4Year={caseItem?.DG4Date?.getFullYear()}
-                setTimeSeries={setGAndGAdminCost}
-                setHasChanges={setHasChanges}
-                timeSeries={gAndGAdminCost}
-                timeSeriesTitle={`G and g admin cost ${currency === 2 ? "(MUSD)" : "(MNOK)"}`}
-                firstYear={firstTSYear!}
-                lastYear={lastTSYear!}
-                setFirstYear={setFirstTSYear!}
-                setLastYear={setLastTSYear}
-            />
-        </AssetViewDiv>
+        <ProjectWrapper>
+            <Body>
+                <SideMenu />
+                <MainView>
+                    <AssetViewDiv>
+                        <Wrapper>
+                            <Typography variant="h2">Exploration</Typography>
+                            <Save
+                                name={name}
+                                setHasChanges={setHasChanges}
+                                hasChanges={hasChanges}
+                                setAsset={setExploration}
+                                setProject={setProject}
+                                asset={exploration!}
+                                assetService={explorationService!}
+                                assetType={AssetTypeEnum.explorations}
+                            />
+                        </Wrapper>
+                        <AssetName
+                            setName={setName}
+                            name={name}
+                            setHasChanges={setHasChanges}
+                        />
+                        <AssetCurrency
+                            setCurrency={setCurrency}
+                            setHasChanges={setHasChanges}
+                            currentValue={currency}
+                        />
+                        <Wrapper>
+                            <NumberInput
+                                setValue={setRigMobDemob}
+                                value={rigMobDemob ?? 0}
+                                setHasChanges={setHasChanges}
+                                integer={false}
+                                disabled={false}
+                                label="Rig mob demob"
+                            />
+                        </Wrapper>
+                        <TimeSeries
+                            dG4Year={caseItem?.DG4Date?.getFullYear()}
+                            setTimeSeries={setCostProfile}
+                            setHasChanges={setHasChanges}
+                            timeSeries={costProfile}
+                            timeSeriesTitle={`Cost profile ${currency === 2 ? "(MUSD)" : "(MNOK)"}`}
+                            firstYear={firstTSYear!}
+                            lastYear={lastTSYear!}
+                            setFirstYear={setFirstTSYear!}
+                            setLastYear={setLastTSYear}
+                        />
+                        <TimeSeries
+                            dG4Year={caseItem?.DG4Date?.getFullYear()}
+                            setTimeSeries={setDrillingSchedule}
+                            setHasChanges={setHasChanges}
+                            timeSeries={drillingSchedule}
+                            timeSeriesTitle="Drilling schedule"
+                            firstYear={firstTSYear!}
+                            lastYear={lastTSYear!}
+                            setFirstYear={setFirstTSYear!}
+                            setLastYear={setLastTSYear}
+                        />
+                        <TimeSeries
+                            dG4Year={caseItem?.DG4Date?.getFullYear()}
+                            setTimeSeries={setGAndGAdminCost}
+                            setHasChanges={setHasChanges}
+                            timeSeries={gAndGAdminCost}
+                            timeSeriesTitle={`G and g admin cost ${currency === 2 ? "(MUSD)" : "(MNOK)"}`}
+                            firstYear={firstTSYear!}
+                            lastYear={lastTSYear!}
+                            setFirstYear={setFirstTSYear!}
+                            setLastYear={setLastTSYear}
+                        />
+                    </AssetViewDiv>
+                </MainView>
+            </Body>
+        </ProjectWrapper>
     )
 }
 

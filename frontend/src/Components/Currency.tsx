@@ -28,15 +28,15 @@ const Currency = ({
     const onChange = async (event: ChangeEvent<HTMLSelectElement>) => {
         let pu:Components.Schemas.Currency
         switch (event.currentTarget.selectedOptions[0].value) {
-        case "2":
-            setCurrency(2)
-            pu = 2
-            break
-        default:
-            setCurrency(1)
-            pu = 1
-            break
-        }
+            case "2":
+                setCurrency(2)
+                pu = 2
+                break
+            default:
+                setCurrency(1)
+                pu = 1
+                break
+            }
         if (project !== undefined) {
             const newProject = project
             newProject.currency = pu

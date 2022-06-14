@@ -1,4 +1,3 @@
-import { Outlet } from "react-router-dom"
 import { useEffect, useState, VoidFunctionComponent } from "react"
 import styled from "styled-components"
 
@@ -30,7 +29,11 @@ const MainView = styled.div`
     overflow: scroll;
 `
 
-export const AuthenticatedViewContainer: VoidFunctionComponent = () => {
+interface AuthHandlerProps {
+    children: JSX.Element;
+}
+
+export const AuthenticatedViewContainer: React.FC<AuthHandlerProps> = () => {
     const { instance, accounts } = useMsal()
     const [haveLoginToken, setHaveLoginToken] = useState<boolean>(false)
     const [haveFusionToken, setHaveFusionToken] = useState<boolean>(false)
@@ -70,12 +73,9 @@ export const AuthenticatedViewContainer: VoidFunctionComponent = () => {
 
     return (
         <Wrapper>
-            <Header name={accounts[0].name} />
             <Body>
                 <SideMenu />
-                <MainView>
-                    <Outlet />
-                </MainView>
+                <MainView />
             </Body>
         </Wrapper>
     )
