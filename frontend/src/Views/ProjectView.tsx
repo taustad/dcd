@@ -198,7 +198,7 @@ const ProjectView = () => {
                 projectId: fusionProjectId,
             })
             toggleCreateCaseModal()
-            history.push(`/project/${projectResult.id}/case/${projectResult.cases.find((o) => (
+            history.push(`/${projectResult.id}/case/${projectResult.cases.find((o) => (
                 o.name === caseName
             ))?.id}`)
         } catch (error) {

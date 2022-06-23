@@ -26,13 +26,11 @@ export const Modal: FunctionComponent<Props> = ({
 }) => {
     if (!isOpen) return null
     return (
-        <Portal>
-            <FocusOn shards={shards}>
-                <ModalDiv>
-                    {title && <Typography variant="h1">{title}</Typography>}
-                    <div>{children}</div>
-                </ModalDiv>
-            </FocusOn>
-        </Portal>
+        <FocusOn shards={shards}>
+            <ModalDiv>
+                {title && <Typography variant="h1">{title}</Typography>}
+                <div>{children}</div>
+            </ModalDiv>
+        </FocusOn>
     )
 }
