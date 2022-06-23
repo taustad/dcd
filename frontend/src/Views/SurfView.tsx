@@ -142,8 +142,10 @@ const SurfView = () => {
                 setCessationCostProfile(newSurf.cessationCostProfile)
 
                 if (caseResult?.DG4Date) {
+                    const dg4 = newSurf?.source === 1 ? newSurf.DG4Date?.getFullYear()
+                        : caseResult.DG4Date.getFullYear()
                     initializeFirstAndLastYear(
-                        caseResult?.DG4Date?.getFullYear(),
+                        dg4!,
                         [newSurf.costProfile, newSurf.cessationCostProfile],
                         setFirstTSYear,
                         setLastTSYear,
@@ -175,8 +177,10 @@ const SurfView = () => {
             newSurf.cessationCostProfile = cessationCostProfile
 
             if (caseItem?.DG4Date) {
+                const dg4 = newSurf?.source === 1 ? newSurf.DG4Date?.getFullYear()
+                    : caseItem.DG4Date.getFullYear()
                 initializeFirstAndLastYear(
-                    caseItem?.DG4Date?.getFullYear(),
+                    dg4!,
                     [costProfile, cessationCostProfile],
                     setFirstTSYear,
                     setLastTSYear,
@@ -210,7 +214,7 @@ const SurfView = () => {
                             />
                             <Typography variant="h6">
                                 {surf?.LastChangedDate?.toLocaleString()
-                        ? `Last changed: ${surf?.LastChangedDate?.toLocaleString()}` : ""}
+                                    ? `Last changed: ${surf?.LastChangedDate?.toLocaleString()}` : ""}
                             </Typography>
                         </Wrapper>
                         <AssetName

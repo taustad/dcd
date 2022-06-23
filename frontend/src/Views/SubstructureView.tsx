@@ -124,8 +124,10 @@ const SubstructureView = () => {
                 setCessationCostProfile(newSubstructure.cessationCostProfile)
 
                 if (caseResult?.DG4Date) {
+                    const dg4 = newSubstructure?.source === 1 ? newSubstructure.DG4Date?.getFullYear()
+                        : caseResult.DG4Date.getFullYear()
                     initializeFirstAndLastYear(
-                        caseResult?.DG4Date?.getFullYear(),
+                        dg4!,
                         [newSubstructure.costProfile, newSubstructure.cessationCostProfile],
                         setFirstTSYear,
                         setLastTSYear,
@@ -152,8 +154,10 @@ const SubstructureView = () => {
             newSubstructure.DG4Date = dG4Date
 
             if (caseItem?.DG4Date) {
+                const dg4 = newSubstructure?.source === 1 ? newSubstructure.DG4Date?.getFullYear()
+                    : caseItem.DG4Date.getFullYear()
                 initializeFirstAndLastYear(
-                    caseItem?.DG4Date?.getFullYear(),
+                    dg4!,
                     [costProfile, cessationCostProfile],
                     setFirstTSYear,
                     setLastTSYear,
@@ -184,7 +188,7 @@ const SubstructureView = () => {
                             />
                             <Typography variant="h6">
                                 {substructure?.LastChangedDate?.toLocaleString()
-                        ? `Last changed: ${substructure?.LastChangedDate?.toLocaleString()}` : ""}
+                                    ? `Last changed: ${substructure?.LastChangedDate?.toLocaleString()}` : ""}
                             </Typography>
                         </Wrapper>
                         <AssetName
@@ -210,7 +214,7 @@ const SubstructureView = () => {
                         </Wrapper>
                         <Typography>
                             {`Prosp version: ${substructure?.ProspVersion
-                    ? substructure?.ProspVersion.toLocaleDateString() : "N/A"}`}
+                                ? substructure?.ProspVersion.toLocaleDateString() : "N/A"}`}
                         </Typography>
                         <Typography>
                             {`Source: ${substructure?.source === 0 || substructure?.source === undefined ? "ConceptApp" : "Prosp"}`}

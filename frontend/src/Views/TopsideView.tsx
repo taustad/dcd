@@ -86,6 +86,7 @@ const TopsideView = () => {
     const [dG3Date, setDG3Date] = useState<Date>()
     const [dG4Date, setDG4Date] = useState<Date>()
     const [topsideService, setTopsideService] = useState<IAssetService>()
+    const [facilityOpex, setFacilityOpex] = useState<number | undefined>()
 
     useEffect(() => {
         (async () => {
@@ -154,9 +155,13 @@ const TopsideView = () => {
                 setFlaredGas(newTopside?.flaredGas)
                 setDG3Date(newTopside.DG3Date ?? undefined)
                 setDG4Date(newTopside.DG4Date ?? undefined)
+                setFacilityOpex(newTopside?.facilityOpex)
+
                 if (caseResult?.DG4Date) {
+                    const dg4 = newTopside?.source === 1 ? newTopside.DG4Date?.getFullYear()
+                        : caseResult.DG4Date.getFullYear()
                     initializeFirstAndLastYear(
-                        caseResult?.DG4Date?.getFullYear(),
+                        dg4!,
                         [newTopside.costProfile, newTopside.cessationCostProfile],
                         setFirstTSYear,
                         setLastTSYear,
@@ -193,9 +198,13 @@ const TopsideView = () => {
             newTopside.flaredGas = flaredGas
             newTopside.DG3Date = dG3Date
             newTopside.DG4Date = dG4Date
+            newTopside.facilityOpex = facilityOpex
+
             if (caseItem?.DG4Date) {
+                const dg4 = newTopside?.source === 1 ? newTopside.DG4Date?.getFullYear()
+                    : caseItem.DG4Date.getFullYear()
                 initializeFirstAndLastYear(
-                    caseItem?.DG4Date?.getFullYear(),
+                    dg4!,
                     [costProfile, cessationCostProfile],
                     setFirstTSYear,
                     setLastTSYear,
@@ -206,7 +215,8 @@ const TopsideView = () => {
     }, [dryweight, oilCapacity, gasCapacity, maturity, costProfile, cessationCostProfile, currency, costYear,
         cO2ShareOilProfile, cO2ShareGasProfile, cO2ShareWaterInjectionProfile, cO2OnMaxOilProfile, cO2OnMaxGasProfile,
         cO2OnMaxWaterInjectionProfile, approvedBy, facilitiesAvailability, artificialLift,
-        producerCount, gasInjectorCount, waterInjectorCount, fuelConsumption, flaredGas, dG3Date, dG4Date])
+        producerCount, gasInjectorCount, waterInjectorCount, fuelConsumption, flaredGas, dG3Date, dG4Date,
+        facilityOpex])
 
     return (
         <ProjectWrapper>
