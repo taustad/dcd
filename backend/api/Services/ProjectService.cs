@@ -5,6 +5,8 @@ using api.Context;
 using api.Dtos;
 using api.Models;
 
+using Api.Services.FusionIntegration;
+
 using Microsoft.EntityFrameworkCore;
 
 using Newtonsoft.Json;
@@ -25,7 +27,9 @@ namespace api.Services
         private readonly CaseService _caseService;
         private readonly ILogger<ProjectService> _logger;
 
-        public ProjectService(DcdDbContext context, ILoggerFactory loggerFactory)
+        private readonly FusionService _fusionService;
+
+        public ProjectService(DcdDbContext context, ILoggerFactory loggerFactory, FusionService fusionService)
         {
             _context = context;
             _logger = loggerFactory.CreateLogger<ProjectService>();
@@ -37,6 +41,7 @@ namespace api.Services
             _caseService = new CaseService(_context, this, loggerFactory);
             _explorationService = new ExplorationService(_context, this, loggerFactory);
             _transportService = new TransportService(_context, this, loggerFactory);
+            _fusionService = fusionService;
         }
 
         public ProjectDto UpdateProject(ProjectDto projectDto)
@@ -69,12 +74,12 @@ namespace api.Services
             if (_context.Projects != null)
             {
                 var existingProjectLibIds = _context.Projects.Select(p => p.CommonLibraryId).ToList();
-                if (existingProjectLibIds.Contains(project.CommonLibraryId))
-                {
-                    // Project already exists, navigate to project
-                    _logger.LogInformation(nameof(project));
-                    return GetProjectDto(_context.Projects.Where(p => p.CommonLibraryId == project.CommonLibraryId).First().Id);
-                }
+                // if (existingProjectLibIds.Contains(project.CommonLibraryId))
+                // {
+                //     // Project already exists, navigate to project
+                //     _logger.LogInformation(nameof(project));
+                //     return await GetProjectDtoAsync(_context.Projects.Where(p => p.CommonLibraryId == project.CommonLibraryId).First().Id);
+                // }
             }
 
             if (_context.Projects == null)
@@ -157,7 +162,12 @@ namespace api.Services
 
                     if (project == null)
                     {
-                        throw new NotFoundInDBException(string.Format("Project {0} not found", projectId));
+                        var projectByFusionId = _context.Projects
+                        .Include(c => c.Cases)
+                        .FirstOrDefault(p => p.FusionProjectId.Equals(projectId));
+                        if (projectByFusionId == null) {
+                            throw new NotFoundInDBException(string.Format("Project {0} not found", projectId));
+                        }
                     }
                     Activity.Current?.AddBaggage(nameof(projectId), JsonConvert.SerializeObject(projectId, Formatting.None,
                         new JsonSerializerSettings()
@@ -174,13 +184,22 @@ namespace api.Services
                 // _logger.LogError(new NotFoundInDBException($"The database contains no projects"), "no projects");
                 // throw new NotFoundInDBException($"The database contains no projects");
                 DateTimeOffset createDate = DateTimeOffset.UtcNow;
+                var fusionProjectMaster = _fusionService.ProjectMasterAsync(projectId).GetAwaiter().GetResult();
                 var newProject = new Project
                 {
+                    Name = fusionProjectMaster.Description,
+                    Description = fusionProjectMaster.Description,
+                    CreateDate = createDate,
+                    FusionProjectId = projectId,
                     Id = projectId,
-                    CreateDate = createDate
+                    Country = fusionProjectMaster.Country,
+                    Currency = Currency.NOK,
+                    PhysicalUnit = PhysUnit.SI,
+                    CommonLibraryName = fusionProjectMaster.Description,
                 };
-                var project = CreateFusionProject(newProject);
-                return project;
+                var project = CreateProject(newProject);
+                var projectDto = ProjectAdapter.Convert(project);
+                return projectDto;
             }
             return null;
         }
@@ -248,6 +267,21 @@ namespace api.Services
         public ProjectDto GetProjectDto(Guid projectId)
         {
             var project = GetProject(projectId);
+            var projectDto = ProjectDtoAdapter.Convert(project);
+
+            Activity.Current?.AddBaggage(nameof(projectDto), JsonConvert.SerializeObject(projectDto, Formatting.None,
+            new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            }));
+
+            _logger.LogInformation(nameof(projectDto));
+            return projectDto;
+        }
+
+        public ProjectDto GetProjectDtoByFusionProjectId(Guid fusionProjectId)
+        {
+            var project = GetProject(fusionProjectId);
             var projectDto = ProjectDtoAdapter.Convert(project);
 
             Activity.Current?.AddBaggage(nameof(projectDto), JsonConvert.SerializeObject(projectDto, Formatting.None,
