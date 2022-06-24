@@ -8,8 +8,6 @@ using Azure.Identity;
 
 using Equinor.TI.CommonLibrary.Client;
 
-using Fusion.Integration.Configuration;
-
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -94,9 +92,9 @@ var appInsightTelemetryOptions = new ApplicationInsightsServiceOptions
     InstrumentationKey = config["ApplicationInsightInstrumentationKey"]
 };
 
-if (environment == "dev")
+if (environment == "localdev")
 {
-builder.Services.AddDbContext<DcdDbContext>(options => options.UseSqlite(_sqlConnectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery)));
+    builder.Services.AddDbContext<DcdDbContext>(options => options.UseSqlite(_sqlConnectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery)));
 }
 else
 {
